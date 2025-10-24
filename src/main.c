@@ -10,29 +10,30 @@ HANDLE g_ToParent = NULL;
 int CreateChildProcess();
 
 int main() {
-  SECURITY_ATTRIBUTES saAttr;
-  saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
+  SECURITY_ATTRIBUTES saAttr; //структура чтобы создавать пайпы
+  saAttr.nLength = sizeof(SECURITY_ATTRIBUTES); //контроль версий api, разные виндовсы - разные сайзофы
   saAttr.bInheritHandle = TRUE;  
   saAttr.lpSecurityDescriptor = NULL;
 
  
   if (!CreatePipe(&g_FromChild, &g_ToParent, &saAttr, 0)) return -1;
-
+//г фром чайлд это родительская штучка
 
   if (!SetHandleInformation(g_FromChild, HANDLE_FLAG_INHERIT, 0)) return -1;
-
+//хендл наследуется ребенком, передаем значение ребенку от родителя, и оно будет валидным
 
   if (!CreatePipe(&g_FromParent, &g_ToChild, &saAttr, 0)) return -1;
-
+//создаем еще пайп, этот будет возвращать(хз)(от родителя к ребенку)
   if (!SetHandleInformation(g_ToChild, HANDLE_FLAG_INHERIT, 0)) return -1;
-  if (CreateChildProcess() != 0) return -1;
+  //хендл наследуется ребенком
+  if (CreateChildProcess() != 0) return -1; //создает потомка
 
 
-  HANDLE writeHandle;
+  HANDLE writeHandle; //указатель на что-то непрозрачное
 
 
-  writeHandle = GetStdHandle(STD_INPUT_HANDLE);
-  HANDLE readHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+  writeHandle = GetStdHandle(STD_INPUT_HANDLE); //стандартный ввод
+  HANDLE readHandle = GetStdHandle(STD_OUTPUT_HANDLE); //стандартный вывод
 
   char buffer[256]; 
   DWORD dwReadFileName; 
@@ -44,15 +45,16 @@ int main() {
         buffer[i] = '\0';
         break;
       }
-    }
+    } //удаляем переводы строки и делаем их нулями
   } else {
     return -1;
   }
   DWORD realLen = dwReadFileName;
  
   WriteFile(g_ToChild, buffer, realLen, &dwReadFileName, NULL);
+//г ту чайлд это от родителя к ребенку строчка 54
   system("cls"); 
-
+//очистка экрана
     
     DWORD dwRead;
     char numStr[256];
@@ -79,22 +81,24 @@ int main() {
     
   
   WriteFile(g_ToChild, numStr, dwRead, &dwRead, NULL);
+  //пишет в пайп ребенку(код где родитель к ребенку)
 
  float result = 0.0f;
   DWORD bytesRead;
   BOOL readSuccess =
       ReadFile(g_FromChild, &result, sizeof(float), &bytesRead, NULL);
-
+//читаем что вернет ребенок
   if (readSuccess != FALSE && bytesRead == sizeof(float)) {
     char header[] = "Result: ";
     char newline[] = "\r\n";
     char floatStr[50];
 
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), header, (DWORD)strlen(header),
-              &dwRead, NULL);
+              &dwRead, NULL); //на экран выписали хедер
 
    
     _gcvt_s(floatStr, sizeof(floatStr), result, 6);
+    //из числа с плав точкой делает строку 
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), floatStr,
               (DWORD)strlen(floatStr), &dwRead, NULL);
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), newline, (DWORD)strlen(newline),
@@ -103,6 +107,7 @@ int main() {
 
   CloseHandle(g_ToChild);
   CloseHandle(g_FromChild);
+  //закрыли родителей
   return 0;
 }
 

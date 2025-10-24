@@ -3,21 +3,21 @@
 #include <windows.h>
 
 int main() {
-  HANDLE readHandle = GetStdHandle(STD_INPUT_HANDLE);
-  HANDLE writeHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+  HANDLE readHandle = GetStdHandle(STD_INPUT_HANDLE); //ввод
+  HANDLE writeHandle = GetStdHandle(STD_OUTPUT_HANDLE); //вывод
   DWORD readedBytesNameFile, readedBytesDigits, writedBytes;
 
   char bufferNameFile[256];
 
   if (ReadFile(readHandle, bufferNameFile, sizeof(bufferNameFile) - 1,
-               &readedBytesNameFile, NULL)) {
+               &readedBytesNameFile, NULL)) { // читаем имя файла для вывода
     bufferNameFile[readedBytesNameFile] = '\0';
   } else {
     return -1;
   }
 
   HANDLE fileHandle = CreateFileA(bufferNameFile, GENERIC_WRITE, 0, NULL,
-                                  CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                                  CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL); //создаем файл
 
   char bufferDigits[256];
 
@@ -26,11 +26,11 @@ int main() {
     bufferDigits[readedBytesDigits] = '\0';
 
     char* context = NULL;
-    char* tok = strtok_s(bufferDigits, " \t\r\n", &context);
+    char* tok = strtok_s(bufferDigits, " \t\r\n", &context); //строку разбили на токены
     float summa = 0.0f;
 
     while (tok != NULL) {
-      summa += strtof(tok, NULL);
+      summa += strtof(tok, NULL); // преобразуем в число и добавляем к сумме
       tok = strtok_s(NULL, " \t\r\n", &context);
     }
 
@@ -43,7 +43,7 @@ int main() {
       WriteFile(fileHandle, header, (DWORD)strlen(header), &writedBytes, NULL);
 
      
-      _gcvt_s(floatStr, sizeof(floatStr), summa, 6);
+      _gcvt_s(floatStr, sizeof(floatStr), summa, 6); //число с плав точкой в строку
       WriteFile(fileHandle, floatStr, (DWORD)strlen(floatStr), &writedBytes,
                 NULL);
       WriteFile(fileHandle, newline, (DWORD)strlen(newline), &writedBytes,
